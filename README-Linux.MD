@@ -62,8 +62,6 @@ openssl genrsa -out private.key 2048
 
 # Extrair a chave pública da chave privada
 openssl rsa -in private.key -pubout -out public.key
-
-echo "Chaves geradas: private.key (privada) e public.key (pública)"
 ```
 
 > **Nota**: `openssl genrsa` gera a chave privada no formato PKCS#1. O comando `openssl rsa -pubout` exporta a chave pública em formato PKIX (SubjectPublicKeyInfo), compatível com a prática do Windows.
@@ -74,6 +72,10 @@ echo "Chaves geradas: private.key (privada) e public.key (pública)"
 2. Enviar **public.key** para o repositório, renomeando para:
 
        public-keys/nome-sobrenome.pub
+
+```bash
+mv public.key public-keys/nome-sobrenome.pub
+```
 
 ---
 
@@ -95,8 +97,6 @@ Você deve alterar o texto da mensagem conforme desejar.
 ```bash
 # Assinar a mensagem com SHA-256 e PKCS#1 padding
 openssl dgst -sha256 -sign private.key -out assinatura.bin mensagem.txt
-
-echo "Assinatura criada e salva em assinatura.bin"
 ```
 
 ### Enviar para o diretório "messages" do repositório
@@ -109,7 +109,7 @@ Sugestão: salve os arquivos em uma pasta do repositório, por exemplo:
 
 ```bash
 mkdir -p messages/mensagem-de-jose-para-maria
-cp mensagem.txt assinatura.bin messages/mensagem-de-jose-para-maria/
+mv mensagem.txt assinatura.bin messages/mensagem-de-jose-para-maria/
 ```
 
 Faça o commit e push dessas alterações para o repositório remoto.
