@@ -1,0 +1,8 @@
+# Manter somente os arquivos .MD e .gitignore na raiz do repositório
+*
+# Exceto os arquivos .MD e .gitignore
+!/*.MD
+!/.gitignore
+!/*/
+# Manter o conteúdo das pastas
+!*/*
