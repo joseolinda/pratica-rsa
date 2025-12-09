@@ -133,7 +133,8 @@ Faça o download dos arquivos enviados pelo colega A e obtenha a chave pública 
 
 ```bash
 # Verificar a assinatura usando a chave pública do colega
-openssl dgst -sha256 -verify public-keys/jose-olinda.pub -signature messages/mensagem-de-jose-para-todos/assinatura.bin messages/mensagem-de-jose-para-todos/mensagem.txt
+cd messages/mensagem-de-jose-para-maria
+openssl dgst -sha256 -verify ../public-keys/jose-olinda.pub -signature assinatura.bin mensagem.txt
 ```
 
 Se a assinatura for válida, o resultado será:
