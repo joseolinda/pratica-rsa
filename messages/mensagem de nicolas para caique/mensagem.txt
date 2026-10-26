@@ -1,1 +1,1 @@
-Esse cara é bacana
+Mensagem destinada a validar autenticidade RSA.
