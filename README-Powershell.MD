@@ -1,70 +1,70 @@
 # Prática de Laboratório — Algoritmo RSA
 
-## Tutorial para Windows com PowerShell
+## Tutorial para Windows com PowerShell ou CMD
 
-Criação e uso de chaves RSA no Windows com **PowerShell**, utilizando as bibliotecas nativas do .NET.
+Criação e uso de chaves RSA no Windows com **OpenSSL**. Os comandos criptográficos são iguais no Windows PowerShell 5.1, PowerShell 7 e Prompt de Comando (CMD); somente a criação e a leitura dos arquivos de texto têm comandos específicos para cada shell.
 
-Simula uma ambiente que usa chaves públicas para troca de mensagens que envolvem, de forma **obrigatória**:
+A prática aborda:
 
-- Geração de par de chaves RSA  
-- Assinatura digital  
-- Verificação da assinatura  
-- Criptografia/encriptação  
-- Decriptação  
+- Geração de par de chaves RSA
+- Assinatura digital
+- Verificação da assinatura
+- Criptografia
+- Decriptação
 
 ---
 
 ## 0. Preparação do ambiente
 
-1. Abra o **PowerShell** (pressione `Win + R`, digite `powershell` e pressione `Enter`).  
-2. Navegue até a pasta onde você deseja trabalhar, por exemplo:
-   ```bash
+1. Abra o **PowerShell** ou o **Prompt de Comando (CMD)**.
+2. Navegue até a pasta onde deseja trabalhar. Exemplo:
+   ```text
    cd C:\Users\SeuUsuario\Desktop
    ```
-3. Para ter certeza onde está trabalhando, execute:
-   ```bash
-   pwd
-   ```
-4. Clone este repositório:
-   ```bash
+3. Clone este repositório e entre na pasta:
+   ```text
    git clone https://github.com/joseolinda/pratica-rsa.git
    cd pratica-rsa
    ```
-5. Todos os comandos abaixo devem ser executados dentro da pasta do repositório clonado.
-6. Tudo que for gerado dentro da pasta raiz do projeto será ignorado pelo Git, exceto os arquivos `.MD` e `.gitignore`.  
-   Apenas os arquivos dentro das pastas `public-keys`, `messages` e `responses` serão versionados.
-7. É importante seguir os passos na ordem apresentada, renomeando e movendo os arquivos conforme solicitado, para os diretórios corretos.
-8. **Pode manter a chave privada (`private.key`) nesta pasta, mas não envie para o repositório**. (!!!!)
-9. Ao gerar e mover os arquivos conforme as instruções, faça o commit e push para o repositório remoto. Mas preste atenção para não enviar sua chave privada ou qualquer arquivo na raiz do repositório.
-10. Não edite este arquivo `README.MD`, apenas siga as instruções.
+4. Todos os comandos abaixo devem ser executados dentro da pasta do repositório clonado.
+5. Instale uma distribuição confiável do OpenSSL para Windows, se ainda não estiver instalada, e disponibilize `openssl.exe` no `PATH`. Em computador administrado pela escola, peça a instalação ao suporte.
+   ```text
+   Install-Module -Name OpenSSL
+    ```
+    ou baixe em (https://slproweb.com/download/Win64OpenSSL_Light-4_1_0.exe).
+6. Confirme a instalação:
+   ```text
+   openssl version
+   ```
+   Os comandos desta prática funcionam com OpenSSL 1.1.1 ou 3.x.
+7. Arquivos gerados na raiz são ignorados pelo Git, exceto arquivos `.MD` e `.gitignore`. Apenas arquivos nas pastas `public-keys`, `messages` e `responses` serão versionados.
+8. Siga as etapas na ordem e use os diretórios indicados.
+9.  **Nunca compartilhe nem envie `private.key` ao repositório.** Antes de cada commit, confira os arquivos selecionados.
+10. Não edite este arquivo; siga as instruções.
 
 ---
 
 ## 1. Gerar o par de chaves RSA
 
-Abra o **PowerShell** e execute:
-```bash
-
-$rsa = [System.Security.Cryptography.RSA]::Create(2048)
-
-[IO.File]::WriteAllBytes("private.key", $rsa.ExportRSAPrivateKey())
-[IO.File]::WriteAllBytes("public.key",  $rsa.ExportRsaPublicKey())
-
-Write-Host "Chaves geradas: private.key (privada) e public.key (pública)"
-
+No PowerShell ou no CMD, execute:
+```text
+openssl genrsa -out private.key 2048
+openssl rsa -in private.key -pubout -out public.key
 ```
 
-> Caso `ExportRsaPublicKey()` não funcione em alguma máquina, troque por:
-```bash
-[IO.File]::WriteAllBytes("public.key", $rsa.ExportSubjectPublicKeyInfo())
-```
+O arquivo `private.key` contém a chave privada; mantenha-o em local seguro. O arquivo `public.key` é a chave pública.
 
 ### Após a criação das chaves
 
-1. Guardar **private.key** apenas em sua própria pasta (não compartilhar com ninguém). O caminho do arquivo será usado posteriormente para assinar e decriptar mensagens.  
-2. Enviar **public.key** para o repositório, renomeando para:
+1. Mantenha `private.key` apenas em seu computador. Ela será usada para assinar e decriptar mensagens.
+2. Envie apenas `public.key` ao repositório, renomeando-o para:
 
        public-keys/nome-sobrenome.pub
+
+   No PowerShell ou CMD:
+   ```text
+   move public.key public-keys\nome-sobrenome.pub
+   ```
 
 ---
 
@@ -74,48 +74,44 @@ Cada aluno deve criar uma mensagem de texto e assiná-la com sua **chave privada
 
 ### 2.1 Criar a mensagem
 
+Para manter o arquivo compatível entre versões do Windows e codificações diferentes, use texto sem acentos.
+
 No PowerShell:
-```bash
-"Mensagem destinada à verificação de autenticidade." | Out-File -Encoding utf8 mensagem.txt
+```powershell
+Set-Content -Path mensagem.txt -Value 'Mensagem destinada a validar autenticidade RSA.' -Encoding Ascii
 ```
 
-Você deve alterar o texto da mensagem conforme desejar.
+No CMD:
+```bat
+echo Mensagem destinada a validar autenticidade RSA.> mensagem.txt
+```
+
+Se alterar o texto, use exatamente o mesmo arquivo `mensagem.txt` durante a verificação. Não o edite nem o salve novamente depois de assinar.
 
 ### 2.2 Assinar a mensagem com a chave privada
 
-```bash
-$rsa = [System.Security.Cryptography.RSA]::Create()
-$offset = 0
-$privateBytes = [IO.File]::ReadAllBytes("private.key")
-$rsa.ImportRSAPrivateKey($privateBytes, [ref]$offset)
-
-$texto  = Get-Content mensagem.txt -Raw
-$data   = [System.Text.Encoding]::UTF8.GetBytes($texto)
-
-$signature = $rsa.SignData(
-    $data,
-    [System.Security.Cryptography.HashAlgorithmName]::SHA256,
-    [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
-)
-
-[IO.File]::WriteAllBytes("assinatura.bin", $signature)
-
-Write-Host "Assinatura criada e salva em assinatura.bin"
+No PowerShell ou no CMD:
+```text
+openssl dgst -sha256 -sign private.key -out assinatura.bin mensagem.txt
 ```
 
-### Enviar para o diretório "messages" do repositório
+O comando cria `assinatura.bin` com uma assinatura RSA/SHA-256.
 
-Crie um arquivo ZIP ou uma pasta com o nome do colega destinatário contendo:
-- `mensagem.txt`  
-- `assinatura.bin`  
+### Enviar a mensagem e a assinatura
 
-Sugestão: salve os arquivos em uma pasta do repositório, por exemplo:
+Crie uma pasta dentro de `messages` com o nome do destinatário e coloque nela:
 
-```bash
-messages/mensagem-de-jose-para-maria/
+- `mensagem.txt`
+- `assinatura.bin`
+
+Exemplo:
+```text
+messages\mensagem-de-jose-para-maria\
     mensagem.txt
     assinatura.bin
 ```
+
+Faça commit e push somente dos arquivos da mensagem e da assinatura. Não inclua `private.key`.
 
 ---
 
@@ -123,114 +119,120 @@ messages/mensagem-de-jose-para-maria/
 
 O aluno B (destinatário) deve verificar a assinatura recebida do colega A, usando a **chave pública** do remetente.
 
-Faça o download dos arquivos enviados pelo colega A e obtenha a chave pública dele no repositório.
-
+Baixe os arquivos enviados pelo colega A e obtenha a chave pública dele no repositório.
 
 ### 3.1 Carregar a chave pública e verificar
 
-```bash
-$rsa = [System.Security.Cryptography.RSA]::Create()
+No PowerShell ou no CMD, execute na pasta que contém `mensagem.txt` e `assinatura.bin`. Substitua `jose-olinda` pelo nome do remetente:
 
-$offset = 0
-$publicBytes = [IO.File]::ReadAllBytes("public-keys/jose-olinda.pub")
-$rsa.ImportSubjectPublicKeyInfo($publicBytes, [ref]$offset)
-
-$texto      = Get-Content mensagem.txt -Raw
-$data       = [System.Text.Encoding]::UTF8.GetBytes($texto)
-$signature  = [IO.File]::ReadAllBytes("assinatura.bin")
-
-$ok = $rsa.VerifyData(
-    $data,
-    $signature,
-    [System.Security.Cryptography.HashAlgorithmName]::SHA256,
-    [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
-)
-
-if ($ok) {
-    Write-Host "✔ Assinatura válida — mensagem realmente enviada pelo colega."
-}
-else {
-    Write-Host "✘ Assinatura inválida — mensagem adulterada ou chave incorreta."
-}
+```text
+openssl dgst -sha256 -verify ../../public-keys/jose-olinda.pub -signature assinatura.bin mensagem.txt
 ```
+
+Se a assinatura for válida, o resultado será:
+```text
+Verified OK
+```
+
+Se a assinatura for inválida, o resultado será:
+```text
+Verification Failure
+```
+
 ---
 
 ### Interpretação do resultado
 
-Responda: o que significa o resultado?  
+Responda: o que significa o resultado?
 
 ---
 
 ## 4. Criptografar uma resposta para o colega
 
-Agora o aluno B deve enviar uma **resposta confidencial** ao aluno A, criptografada com a **chave pública** do colega A. Não use sua própria chave pública, nem mesmo a sua chave privada.
+O aluno B deve enviar uma **resposta confidencial** ao aluno A, criptografada com a **chave pública** do colega A. Não use sua própria chave pública.
 
 ### 4.1 Criar a resposta
 
-```bash
-"Esta é uma resposta confidencial para o colega." |
-        Out-File -Encoding utf8 resposta.txt
+No PowerShell:
+```powershell
+Set-Content -Path resposta.txt -Value 'Resposta confidencial para o colega.' -Encoding Ascii
 ```
 
-Fique à vontade para alterar o texto da resposta. Mensagem ofensiva? Nota zero na prática!
+No CMD:
+```bat
+echo Resposta confidencial para o colega.> resposta.txt
+```
+
+Você pode alterar o texto; evite acentos para preservar compatibilidade entre shells.
 
 ### 4.2 Criptografar com a chave pública do colega
 
-```bash
-$rsa = [System.Security.Cryptography.RSA]::Create()
-
-$offset = 0
-$publicBytes = [IO.File]::ReadAllBytes("public-keys/nome-sobrenome.pub")
-$rsa.ImportSubjectPublicKeyInfo($publicBytes, [ref]$offset)
-
-$textoResposta = Get-Content resposta.txt -Raw
-$dataResposta  = [System.Text.Encoding]::UTF8.GetBytes($textoResposta)
-
-$encrypted = $rsa.Encrypt(
-    $dataResposta,
-    [System.Security.Cryptography.RSAEncryptionPadding]::Pkcs1
-)
-
-[IO.File]::WriteAllBytes("resposta-para-<nome-sobrenome>.enc", $encrypted)
-
-Write-Host "Resposta criptografada salva em resposta.enc"
+No PowerShell ou no CMD, substitua `nome-sobrenome` pelo nome do destinatário:
+```text
+openssl pkeyutl -encrypt -in resposta.txt -inkey public-keys/nome-sobrenome.pub -pubin -out responses/resposta-para-nome-sobrenome.enc
 ```
+
+O OpenSSL usa o padding RSA PKCS#1 v1.5 por padrão neste comando.
 
 ### O que o aluno B deve enviar
 
-- Arquivo `resposta-para-<nome-sobrenome>.enc` para o diretório `responses` no repositório.
-- Faça o commit e push.
+- Faça commit e push do arquivo `responses/resposta-para-nome-sobrenome.enc`.
+- Não envie `resposta.txt` se a mensagem precisar permanecer confidencial.
 
 ---
 
 ## 5. Decriptar a resposta recebida (obrigatório)
 
-O aluno A (que recebeu `resposta-para-<nome-sobrenome>.enc`) deve decriptar a resposta usando **sua chave privada** (`private.key`).
+O aluno A, que recebeu `resposta-para-nome-sobrenome.enc`, deve decriptar a resposta usando sua chave privada (`private.key`).
 
 ### 5.1 Decriptar com a chave privada
-```bash
-$rsa = [System.Security.Cryptography.RSA]::Create()
 
-$offset = 0
-$privateBytes = [IO.File]::ReadAllBytes("private.key")
-$rsa.ImportRSAPrivateKey($privateBytes, [ref]$offset)
-
-$encrypted = [IO.File]::ReadAllBytes("responses/resposta-para-<nome-sobrenome>.enc")
-
-$decryptedBytes = $rsa.Decrypt(
-    $encrypted,
-    [System.Security.Cryptography.RSAEncryptionPadding]::Pkcs1
-)
-
-$mensagemDecriptada = [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
-
-Write-Host "Mensagem decriptada:"
-Write-Host $mensagemDecriptada
+No PowerShell ou no CMD:
+```text
+openssl pkeyutl -decrypt -in responses/resposta-para-nome-sobrenome.enc -inkey private.key -out resposta-decriptada.txt
 ```
 
-A mensagem decriptada deve ser exatamente o texto que o colega escreveu em `resposta.txt`. Somente o dono da chave privada correspondente à chave pública usada na criptografia pode decriptar a mensagem.
+Para exibir o texto, use o comando do shell aberto.
 
-Recomenda-se que outros colegas tentem decriptar mensagens que não são destinadas a eles, para entenderem o conceito de confidencialidade.
+No PowerShell:
+```powershell
+Get-Content -Path resposta-decriptada.txt -Raw
+```
+
+No CMD:
+```bat
+type resposta-decriptada.txt
+```
+
+A mensagem decriptada deve corresponder ao texto escrito pelo colega. Somente quem possui a chave privada correspondente à chave pública usada na criptografia pode decriptar a mensagem.
+
+---
+
+## Troubleshooting
+
+### Problema: `openssl` não é reconhecido
+
+Instale o OpenSSL para Windows ou peça ajuda ao suporte técnico. Depois de instalar, feche e reabra o terminal e confirme com:
+```text
+openssl version
+```
+
+### Problema: erro ao abrir um arquivo
+
+Confirme que o terminal está na pasta correta e que os nomes e caminhos existem:
+```text
+dir
+dir public-keys
+dir responses
+```
+
+### Problema: `Verification Failure`
+
+Confirme que:
+
+1. `mensagem.txt` não foi alterado depois de assinado e é o mesmo arquivo usado para a verificação.
+2. A chave pública pertence ao remetente.
+3. Os comandos de assinatura e verificação usam SHA-256.
 
 ---
 
@@ -239,7 +241,7 @@ Recomenda-se que outros colegas tentem decriptar mensagens que não são destina
 Cada estudante deverá entregar (por exemplo, via Classroom):
 
 1. Um **relatório curto (até 1 página)** contendo:
-   - Diferença entre **assinatura digital** e **criptografia**.  
+   - Diferença entre **assinatura digital** e **criptografia**.
    - Diferença de criptografar com chave pública e chave privada.
-   - Riscos associados ao vazamento da chave privada.  
+   - Riscos associados ao vazamento da chave privada.
    - Resumo textual do fluxo realizado.
