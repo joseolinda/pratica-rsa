@@ -1,1 +1,1 @@
-valida ai show
+Mensagem destinada a validar autenticidade RSA.
