@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prática de RSA com OpenSSL: geração de chaves, assinatura digital, verificação, criptografia e descriptografia.">
+  <title>Prática de laboratório — RSA com OpenSSL — Linux e macOS</title>
+  <style>
+:root { color-scheme: light; --ink: #172536; --muted: #526177; --line: #d9e1e9; --accent: #075b99; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+body { margin: 0; color: var(--ink); background: #f3f6fa; font: 16px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+.site-header { padding: 0 0 1.5rem; }
+.site-header p { margin: 0 0 .6rem; font-size: .8rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.guides { display: flex; gap: .65rem; flex-wrap: wrap; }
+.guides a { padding: .5rem 1rem; border: 1px solid var(--line); border-radius: .5rem; background: white; text-decoration: none; font-weight: 650; }
+.guides a[aria-current="page"] { background: var(--accent); color: white; border-color: var(--accent); }
+main { padding: clamp(1rem, 4vw, 3rem); background: white; border: 1px solid var(--line); border-radius: .8rem; }
+a { color: var(--accent); text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible { outline: 3px solid #d47d05; outline-offset: 4px; }
+h1, h2, h3 { line-height: 1.3; color: #102942; }
+h1 { margin: 0 0 1.25rem; font-size: clamp(1.8rem, 4vw, 2.55rem); letter-spacing: -.025em; }
+h2 { margin: 2.6rem 0 1rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: 1.5rem; }
+h3 { margin: 1.8rem 0 .8rem; font-size: 1.13rem; }
+p, ul, ol { margin: 0 0 1.1rem; }
+li { margin: .35rem 0; }
+strong { font-weight: 720; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; }
+code { padding: .12em .32em; background: #edf2f6; border-radius: .25rem; font-size: .88em; overflow-wrap: anywhere; }
+pre { margin: 1.1rem 0 1.4rem; padding: 1.1rem 1.2rem; background: #132638; color: #f2f6fb; border-radius: .5rem; overflow-x: auto; line-height: 1.6; tab-size: 4; }
+pre code { padding: 0; background: none; color: inherit; font-size: .84rem; overflow-wrap: normal; }
+.table-scroll { width: 100%; overflow-x: auto; margin: 1.1rem 0 1.5rem; }
+table { width: 100%; border-collapse: collapse; font-size: .94rem; }
+th, td { padding: .75rem .85rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: #edf3f8; font-weight: 700; }
+tbody tr:nth-child(even) { background: #f8fafc; }
+.toc { padding: 1rem 1.2rem; margin: 0 0 2rem; background: #f3f7fb; border: 1px solid var(--line); border-radius: .5rem; }
+.toc summary { cursor: pointer; font-weight: 700; }
+.toc ul { columns: 2; column-gap: 2rem; margin: .8rem 0 0; padding-left: 1.3rem; font-size: .92rem; }
+.toc li { break-inside: avoid; }
+footer { margin-top: 1.3rem; color: var(--muted); font-size: .85rem; }
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 1rem; top: 1rem; background: white; padding: .5rem; z-index: 10; }
+@media (max-width: 600px) {
+  .page { padding: 1rem .6rem 2rem; }
+  main { border-radius: .4rem; }
+  .toc ul { columns: 1; }
+  th, td { padding: .6rem; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media print {
+  @page { margin: 16mm; }
+  body { background: white; color: black; font-size: 10pt; line-height: 1.5; }
+  .page { padding: 0; max-width: none; }
+  .site-header, .toc, .skip, footer { display: none; }
+  main { padding: 0; border: 0; }
+  h1 { font-size: 23pt; }
+  h2 { font-size: 16pt; margin-top: 1.5rem; }
+  h3 { font-size: 12pt; }
+  h1, h2, h3 { break-after: avoid; }
+  p, li { orphans: 3; widows: 3; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; color: black; background: #f3f3f3; border: 1px solid #bbb; padding: .6rem; }
+  pre code { font-size: 8pt; white-space: inherit; overflow-wrap: inherit; }
+  .table-scroll { overflow: visible; }
+  table { table-layout: fixed; font-size: 9pt; }
+  td, th { overflow-wrap: anywhere; padding: .4rem; }
+  tr { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+  <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+  <div class="page">
+    <header class="site-header">
+      <p>Laboratório RSA</p>
+      <nav class="guides" aria-label="Escolha o roteiro"><a href="README.html" aria-current="page">Linux e macOS</a>
+<a href="README-Powershell.html">Windows · PowerShell</a></nav>
+    </header>
+    <main id="conteudo">
+      <nav class="toc" aria-label="Etapas deste roteiro">
+        <details open><summary>Neste roteiro</summary>
+          <ul><li><a href="#como-a-dupla-vai-trabalhar">Como a dupla vai trabalhar</a></li><li><a href="#0-preparar-o-ambiente-e-as-pastas">0. Preparar o ambiente e as pastas</a></li><li><a href="#1-criar-e-compartilhar-as-chaves">1. Criar e compartilhar as chaves</a></li><li><a href="#2-criar-assinar-e-enviar-uma-mensagem">2. Criar, assinar e enviar uma mensagem</a></li><li><a href="#3-conferir-se-a-mensagem-recebida-e-original">3. Conferir se a mensagem recebida é original</a></li><li><a href="#4-criar-e-enviar-um-texto-criptografado">4. Criar e enviar um texto criptografado</a></li><li><a href="#5-descriptografar-o-texto-recebido">5. Descriptografar o texto recebido</a></li><li><a href="#6-entrega-individual">6. Entrega individual</a></li><li><a href="#problemas-frequentes">Problemas frequentes</a></li><li><a href="#referencias-tecnicas">Referências técnicas</a></li></ul>
+        </details>
+      </nav>
+      <article><h1 id="pratica-de-laboratorio-rsa-com-openssl">Prática de laboratório — RSA com OpenSSL</h1>
+<p>Ao final da prática, <strong>cada aluno</strong> terá criado suas chaves pública e privada, enviado uma mensagem assinada, verificado uma mensagem recebida, enviado um texto criptografado e descriptografado a resposta do colega.</p>
+<p><strong>Windows:</strong> siga o <a href="README-Powershell.html">roteiro para PowerShell</a>, que inclui o download do OpenSSL Light pelo navegador e a alternativa com <code>wget.exe</code>. Os comandos abaixo são para <strong>Linux e macOS, em Bash ou Zsh</strong>. Alunos em sistemas diferentes podem formar uma dupla.</p>
+<h2 id="como-a-dupla-vai-trabalhar">Como a dupla vai trabalhar</h2>
+<p>Escolham identificadores sem espaços ou acentos, como <code>alice-silva</code> e <code>bruno-lima</code>. Nos exemplos, usamos <code>alice</code> e <code>bruno</code>. Cada aluno usa seu próprio computador, sua própria chave privada e executa <strong>todas as etapas</strong>, enviando e recebendo arquivos. Usem apenas mensagens fictícias nesta atividade.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Operação</th>
+<th>Chave usada</th>
+<th>O que aprendemos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Assinar uma mensagem</td>
+<td>Privada do remetente</td>
+<td>Produzir uma assinatura vinculada ao conteúdo</td>
+</tr>
+<tr>
+<td>Verificar a assinatura</td>
+<td>Pública do remetente</td>
+<td>Conferir integridade e autenticidade em relação à chave confirmada</td>
+</tr>
+<tr>
+<td>Criptografar um texto</td>
+<td>Pública do destinatário</td>
+<td>Proteger a confidencialidade</td>
+</tr>
+<tr>
+<td>Descriptografar o texto</td>
+<td>Privada do destinatário</td>
+<td>Recuperar o conteúdo recebido</td>
+</tr>
+</tbody>
+</table></div>
+<p>Assinatura <strong>não esconde</strong> o texto. Criptografia, sozinha, <strong>não comprova quem enviou</strong> o texto: qualquer pessoa com a chave pública do destinatário pode criptografar para ele. Assinar é uma operação própria; não a descreva como “criptografar com a chave privada”.</p>
+<h2 id="0-preparar-o-ambiente-e-as-pastas">0. Preparar o ambiente e as pastas</h2>
+<h3 id="openssl-e-git">OpenSSL e Git</h3>
+<p>Verifique os programas:</p>
+<pre><code class="language-bash">openssl version
+git --version
+</code></pre>
+<p>Use <strong>OpenSSL 3.x</strong>. Se necessário, instale pelo gerenciador do sistema:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Sistema</th>
+<th>Instalação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ubuntu/Debian</td>
+<td><code>sudo apt update</code> e depois <code>sudo apt install openssl git</code></td>
+</tr>
+<tr>
+<td>Fedora</td>
+<td><code>sudo dnf install openssl git</code></td>
+</tr>
+<tr>
+<td>macOS com Homebrew</td>
+<td><code>brew install openssl@3 git</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>No macOS, se <code>openssl version</code> ainda mostrar LibreSSL ou uma versão antiga, ajuste o terminal atual e confira novamente:</p>
+<pre><code class="language-bash">export PATH=&quot;$(brew --prefix openssl@3)/bin:$PATH&quot;
+openssl version
+</code></pre>
+<p>Clone o repositório indicado pelo professor. O endereço abaixo é o projeto base; use o repositório da turma se houver outro. Para o fluxo com <code>push</code>, é necessário ter acesso de escrita ao repositório compartilhado.</p>
+<pre><code class="language-bash">git clone https://github.com/joseolinda/pratica-rsa.git
+cd pratica-rsa
+</code></pre>
+<p><strong>Depois deste <code>cd</code>, execute todos os comandos na raiz <code>pratica-rsa</code>.</strong> Não entre nas pastas de mensagens. Se o terminal for fechado, volte à raiz e defina novamente as variáveis abaixo.</p>
+<h3 id="identificar-remetente-e-destinatario">Identificar remetente e destinatário</h3>
+<p>Alice usa o bloco a seguir. Bruno troca <strong>somente as duas primeiras linhas</strong> por <code>eu='bruno'</code> e <code>colega='alice'</code>. Substituam os exemplos pelos identificadores reais da dupla.</p>
+<pre><code class="language-bash">eu='alice'
+colega='bruno'
+local=&quot;local/$eu&quot;
+enviada=&quot;messages/de-$eu-para-$colega&quot;
+recebida=&quot;messages/de-$colega-para-$eu&quot;
+respostaEnviada=&quot;responses/de-$eu-para-$colega&quot;
+respostaRecebida=&quot;responses/de-$colega-para-$eu&quot;
+mkdir -p &quot;$local&quot; public-keys &quot;$enviada&quot; &quot;$respostaEnviada&quot;
+chmod 700 &quot;$local&quot;
+</code></pre>
+<p>A organização será esta, no exemplo de Alice:</p>
+<pre><code class="language-text">pratica-rsa/
+├── local/alice/                       # Somente neste computador; ignorado pelo Git
+│   ├── private.key                   # Chave privada de Alice
+│   ├── resposta.txt                  # Texto confidencial antes da criptografia
+│   └── resposta-recebida.txt          # Texto recebido após a descriptografia
+├── public-keys/
+│   ├── alice.pub                     # Chave pública de Alice
+│   └── bruno.pub                     # Chave pública de Bruno
+├── messages/
+│   ├── de-alice-para-bruno/           # Mensagem enviada por Alice
+│   │   ├── mensagem.txt
+│   │   └── assinatura.bin
+│   └── de-bruno-para-alice/           # Mensagem recebida de Bruno
+│       ├── mensagem.txt
+│       └── assinatura.bin
+└── responses/
+    ├── de-alice-para-bruno/resposta.enc
+    └── de-bruno-para-alice/resposta.enc
+</code></pre>
+<p>O <code>.gitignore</code> permite as chaves <code>.pub</code>, as mensagens assinadas e as respostas <code>.enc</code> nos caminhos indicados, além da documentação. A pasta <code>local/</code> e as chaves privadas ficam fora do versionamento. O <code>.gitattributes</code> preserva os bytes das mensagens assinadas durante a troca entre Windows e Linux/macOS. <strong>Nunca publique sua chave privada nem o texto confidencial.</strong></p>
+<p>Se já fez uma versão anterior da prática, mantenha sua chave antiga guardada e comece em um identificador novo ou em outro clone. Os novos comandos usam <code>local/&lt;aluno&gt;/private.key</code>, não a antiga <code>private.key</code> da raiz. Os arquivos antigos <code>.enc</code> podem ter usado outro padding; refaçam a troca com o novo roteiro.</p>
+<h2 id="1-criar-e-compartilhar-as-chaves">1. Criar e compartilhar as chaves</h2>
+<p>Gere a chave privada RSA de 2048 bits e extraia a chave pública. O teste inicial evita substituir uma chave existente. Se os dois arquivos já existem e formam seu próprio par, preserve-os e pule a geração. Se apenas um existe ou se você não tem certeza de quem é a chave pública, resolva com o professor antes de continuar; uma nova identidade exige outro identificador livre e a atualização das variáveis.</p>
+<pre><code class="language-bash">if [ -e &quot;$local/private.key&quot; ] || [ -e &quot;public-keys/$eu.pub&quot; ]; then
+  printf '%s\n' 'Ja existe uma chave neste caminho. Nao sobrescreva o par existente.'
+else
+  (umask 077; openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out &quot;$local/private.key&quot;) &amp;&amp;
+  openssl pkey -in &quot;$local/private.key&quot; -pubout -out &quot;public-keys/$eu.pub&quot;
+fi
+</code></pre>
+<p>Confira a estrutura da chave privada sem exibir seu conteúdo:</p>
+<pre><code class="language-bash">openssl pkey -in &quot;$local/private.key&quot; -check -noout
+</code></pre>
+<p>O resultado deve conter <code>Key is valid</code>. Para simplificar o laboratório, a chave é salva sem senha e protegida pela pasta local; mantenha o computador e esse arquivo sob seu controle. A chave privada é usada para <strong>assinar e descriptografar</strong>. Compartilhe somente <code>public-keys/&lt;seu-identificador&gt;.pub</code>.</p>
+<h3 id="publicar-a-chave-publica">Publicar a chave pública</h3>
+<pre><code class="language-bash">git add &quot;public-keys/$eu.pub&quot;
+git diff --cached --name-only
+</code></pre>
+<p>Confira a lista antes de continuar: nesta etapa, apenas sua chave pública deve estar selecionada. Se houver algo indevido, retire-o da seleção com <code>git restore --staged caminho-do-arquivo</code>.</p>
+<pre><code class="language-bash">git commit -m &quot;Publica chave de $eu&quot;
+git pull --rebase
+git push
+</code></pre>
+<p><strong>Ponto de encontro:</strong> ambos publicam suas chaves antes de avançar. Atualize seu clone:</p>
+<pre><code class="language-bash">git pull --ff-only
+</code></pre>
+<h3 id="confirmar-a-chave-do-colega">Confirmar a chave do colega</h3>
+<p>Calcule a impressão digital SHA-256 da sua chave e da chave recebida:</p>
+<pre><code class="language-bash">openssl pkey -pubin -in &quot;public-keys/$eu.pub&quot; -outform DER -out &quot;$local/minha-publica.der&quot;
+openssl dgst -sha256 &quot;$local/minha-publica.der&quot;
+openssl pkey -pubin -in &quot;public-keys/$colega.pub&quot; -outform DER -out &quot;$local/publica-colega.der&quot;
+openssl dgst -sha256 &quot;$local/publica-colega.der&quot;
+</code></pre>
+<p>Conversem pessoalmente: o hash que você calculou para a chave do colega deve ser igual ao hash que ele calculou para a própria chave. Comparem a sequência hexadecimal; os nomes dos arquivos serão diferentes. Uma assinatura válida só pode ser atribuída ao colega depois de confirmar que a chave pública realmente é dele.</p>
+<h2 id="2-criar-assinar-e-enviar-uma-mensagem">2. Criar, assinar e enviar uma mensagem</h2>
+<p>Crie uma mensagem pública e assine com <strong>sua chave privada</strong>:</p>
+<pre><code class="language-bash">printf 'Ola, %s! Esta mensagem foi enviada por %s.\n' &quot;$colega&quot; &quot;$eu&quot; &gt; &quot;$enviada/mensagem.txt&quot;
+openssl dgst -sha256 -sign &quot;$local/private.key&quot; -out &quot;$enviada/assinatura.bin&quot; &quot;$enviada/mensagem.txt&quot;
+</code></pre>
+<p>Você pode personalizar o texto <strong>antes</strong> de assinar. A assinatura usa RSA com SHA-256; <code>assinatura.bin</code> é um arquivo binário separado. A mensagem continua legível. Depois de assinar, não edite nem salve novamente <code>mensagem.txt</code>, pois a assinatura depende dos bytes exatos do arquivo.</p>
+<p>Envie <strong>os dois arquivos</strong>:</p>
+<pre><code class="language-bash">git add &quot;$enviada/mensagem.txt&quot; &quot;$enviada/assinatura.bin&quot;
+git diff --cached --name-only
+</code></pre>
+<p>Confira que apenas esses dois arquivos foram selecionados e publique:</p>
+<pre><code class="language-bash">git commit -m &quot;Envia mensagem assinada de $eu para $colega&quot;
+git pull --rebase
+git push
+</code></pre>
+<p><strong>Ponto de encontro:</strong> ambos enviam suas mensagens antes de verificar a mensagem recebida.</p>
+<h2 id="3-conferir-se-a-mensagem-recebida-e-original">3. Conferir se a mensagem recebida é original</h2>
+<p>Atualize os arquivos e verifique com a <strong>chave pública do remetente</strong>:</p>
+<pre><code class="language-bash">git pull --ff-only
+openssl dgst -sha256 -verify &quot;public-keys/$colega.pub&quot; -signature &quot;$recebida/assinatura.bin&quot; &quot;$recebida/mensagem.txt&quot;
+echo &quot;Codigo de saida: $?&quot;
+</code></pre>
+<p>Resultado esperado: <code>Verified OK</code> e código <code>0</code>. Isso confirma que o conteúdo corresponde à assinatura para a chave pública usada. Com a chave confirmada na etapa 1, você também relaciona a assinatura ao colega. Não significa que o conteúdo da mensagem seja verdadeiro.</p>
+<h3 id="experimento-1-alterar-uma-copia">Experimento 1: alterar uma cópia</h3>
+<p>Mantenha a mensagem recebida intacta. Altere apenas uma cópia local e tente verificar com a assinatura original:</p>
+<pre><code class="language-bash">cp &quot;$recebida/mensagem.txt&quot; &quot;$local/mensagem-alterada.txt&quot;
+printf '\nTexto acrescentado depois da assinatura.\n' &gt;&gt; &quot;$local/mensagem-alterada.txt&quot;
+openssl dgst -sha256 -verify &quot;public-keys/$colega.pub&quot; -signature &quot;$recebida/assinatura.bin&quot; &quot;$local/mensagem-alterada.txt&quot;
+echo &quot;Codigo de saida: $?&quot;
+</code></pre>
+<p>Resultado esperado: <code>Verification failure</code> ou <code>Verification Failure</code>, com código diferente de <code>0</code>. Esse é um <strong>erro esperado</strong>: a assinatura detectou a alteração.</p>
+<h3 id="experimento-2-usar-a-chave-publica-errada">Experimento 2: usar a chave pública errada</h3>
+<p>Use sua chave pública para tentar verificar a mensagem assinada pelo colega:</p>
+<pre><code class="language-bash">openssl dgst -sha256 -verify &quot;public-keys/$eu.pub&quot; -signature &quot;$recebida/assinatura.bin&quot; &quot;$recebida/mensagem.txt&quot;
+echo &quot;Codigo de saida: $?&quot;
+</code></pre>
+<p>Também deve falhar. Registre os três resultados: original com chave correta, cópia alterada e original com chave errada.</p>
+<h2 id="4-criar-e-enviar-um-texto-criptografado">4. Criar e enviar um texto criptografado</h2>
+<p>Agora cada aluno responde ao colega com um texto confidencial. Salve o texto somente em <code>local/</code>:</p>
+<pre><code class="language-bash">printf 'Resposta confidencial de %s para %s: encontro na biblioteca.\n' &quot;$eu&quot; &quot;$colega&quot; &gt; &quot;$local/resposta.txt&quot;
+wc -c &lt; &quot;$local/resposta.txt&quot;
+</code></pre>
+<p>O número exibido é o tamanho em <strong>bytes</strong>, incluindo acentos e quebras de linha. Nesta prática, RSA de 2048 bits com <strong>OAEP/SHA-256</strong> aceita no máximo <strong>190 bytes</strong> (<code>256 - 2 × 32 - 2</code>). Se passar disso, encurte o texto antes de continuar. Para arquivos maiores, usa-se criptografia híbrida, assunto para outra atividade.</p>
+<p>Criptografe com a <strong>chave pública do destinatário</strong>, usando os mesmos parâmetros OAEP nos dois sistemas:</p>
+<pre><code class="language-bash">openssl pkeyutl -encrypt -pubin -inkey &quot;public-keys/$colega.pub&quot; -in &quot;$local/resposta.txt&quot; -out &quot;$respostaEnviada/resposta.enc&quot; -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256
+</code></pre>
+<p>O comando deve terminar sem erro. O arquivo <code>resposta.enc</code> tem 256 bytes e não é texto legível. Ele é criptografado, mas não foi assinado nesta etapa; a criptografia sozinha não autentica seu remetente. Publique somente o arquivo criptografado:</p>
+<pre><code class="language-bash">git add &quot;$respostaEnviada/resposta.enc&quot;
+git diff --cached --name-only
+</code></pre>
+<p>Confira que apenas <code>resposta.enc</code> foi selecionado:</p>
+<pre><code class="language-bash">git commit -m &quot;Envia resposta criptografada de $eu para $colega&quot;
+git pull --rebase
+git push
+</code></pre>
+<p><strong>Ponto de encontro:</strong> ambos enviam suas respostas criptografadas. Não envie <code>local/resposta.txt</code> nem sua chave privada.</p>
+<h2 id="5-descriptografar-o-texto-recebido">5. Descriptografar o texto recebido</h2>
+<p>Atualize os arquivos e use <strong>sua chave privada</strong>, correspondente à chave pública usada pelo colega:</p>
+<pre><code class="language-bash">git pull --ff-only
+openssl pkeyutl -decrypt -inkey &quot;$local/private.key&quot; -in &quot;$respostaRecebida/resposta.enc&quot; -out &quot;$local/resposta-recebida.txt&quot; -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256
+echo &quot;Codigo de saida: $?&quot;
+cat &quot;$local/resposta-recebida.txt&quot;
+</code></pre>
+<p>Resultado esperado: código <code>0</code> e o texto que seu colega escreveu. <strong>Se houver erro, não considere o arquivo de saída uma mensagem válida.</strong> Compare o texto recuperado com o original na tela do colega, sem publicar os textos confidenciais.</p>
+<h3 id="experimento-3-tentar-descriptografar-com-a-chave-errada">Experimento 3: tentar descriptografar com a chave errada</h3>
+<p>Tente abrir a resposta que <strong>você enviou</strong> ao colega. Ela foi criptografada com a chave pública dele, então sua chave privada não deve funcionar:</p>
+<pre><code class="language-bash">openssl pkeyutl -decrypt -inkey &quot;$local/private.key&quot; -in &quot;$respostaEnviada/resposta.enc&quot; -out &quot;$local/teste-chave-errada.txt&quot; -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256
+echo &quot;Codigo de saida: $?&quot;
+</code></pre>
+<p>Resultado esperado: erro de descriptografia OAEP e código diferente de <code>0</code>. O arquivo de saída dessa tentativa não deve ser usado. Apenas quem possui a chave privada correspondente à chave pública do destinatário consegue recuperar corretamente esse texto.</p>
+<h2 id="6-entrega-individual">6. Entrega individual</h2>
+<p>Cada estudante deve entregar um relatório de até uma página no Classroom, com seu identificador, o identificador do colega e:</p>
+<ul>
+<li>Caminhos da sua chave <strong>pública</strong>, da mensagem assinada enviada e da resposta criptografada enviada no repositório.</li>
+<li>Evidências dos três testes de assinatura: original válido, cópia alterada inválida e chave pública errada inválida.</li>
+<li>Evidência de descriptografia bem-sucedida e da falha com chave privada errada. Use o texto fictício da prática.</li>
+<li>Explicação de qual chave usou em cada operação e da diferença entre autenticidade, integridade e confidencialidade.</li>
+<li>Respostas: por que confirmar a chave pública? O que acontece se a chave privada vazar? Criptografar para alguém prova quem enviou?</li>
+</ul>
+<p><strong>Critério de conclusão:</strong> cada aluno precisa realizar geração de chaves, assinatura, envio, verificação, criptografia e descriptografia. Dividir as operações entre os integrantes não completa a prática individual. A chave privada não faz parte de nenhuma entrega.</p>
+<h2 id="problemas-frequentes">Problemas frequentes</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Sintoma</th>
+<th>Como resolver</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>openssl</code> não encontrado ou LibreSSL no macOS</td>
+<td>Instale OpenSSL 3 e confira o <code>PATH</code> da etapa 0. No Windows, siga o <a href="README-Powershell.html">roteiro PowerShell</a>.</td>
+</tr>
+<tr>
+<td>Arquivo não encontrado</td>
+<td>Execute <code>pwd</code> e <code>ls</code>; volte à raiz do repositório e confira identificadores e variáveis. Aguarde o colega publicar e execute <code>git pull --ff-only</code>.</td>
+</tr>
+<tr>
+<td>Variáveis vazias após reabrir o terminal</td>
+<td>Repita o bloco de identificação da etapa 0; não gere outro par de chaves.</td>
+</tr>
+<tr>
+<td><code>Verified OK</code> não aparece no teste original</td>
+<td>Confira a chave do remetente, a assinatura correspondente e se o arquivo foi editado ou convertido após a assinatura. Peça ao remetente para assinar e enviar novamente o arquivo definitivo.</td>
+</tr>
+<tr>
+<td><code>data too large for key size</code></td>
+<td>A resposta excedeu 190 bytes. Encurte o texto; conte bytes com <code>wc -c</code>, não caracteres.</td>
+</tr>
+<tr>
+<td>Erro OAEP ao descriptografar</td>
+<td>Confira o destinatário, sua chave privada original e os três parâmetros <code>rsa_padding_mode</code>, <code>rsa_oaep_md</code> e <code>rsa_mgf1_md</code>. Não misture respostas antigas com o novo fluxo.</td>
+</tr>
+<tr>
+<td><code>push</code> rejeitado porque o colega enviou antes</td>
+<td>Depois de seu commit, execute <code>git pull --rebase</code> e tente <code>git push</code> novamente. Em caso de conflito, peça ajuda ao professor antes de sobrescrever arquivos.</td>
+</tr>
+<tr>
+<td>Git pede nome e e-mail</td>
+<td>Configure sua identidade com <code>git config user.name &quot;Seu Nome&quot;</code> e <code>git config user.email &quot;seu-email&quot;</code> neste clone.</td>
+</tr>
+<tr>
+<td>Sem acesso de escrita ao repositório</td>
+<td>Use o repositório da turma indicado pelo professor ou troque os mesmos arquivos por uma pasta compartilhada, preservando nomes e bytes. Não compartilhe a pasta <code>local/</code>.</td>
+</tr>
+<tr>
+<td>Chave privada perdida</td>
+<td>Ela não pode ser recuperada da chave pública. Gere um novo par em outra pasta, confirme a nova chave com o colega e refaçam o envio destinado ao novo par.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="referencias-tecnicas">Referências técnicas</h2>
+<ul>
+<li>Geração e exportação das chaves: <a href="https://docs.openssl.org/3.5/man1/openssl-genpkey/">OpenSSL <code>genpkey</code></a> e <a href="https://docs.openssl.org/3.5/man1/openssl-pkey/"><code>pkey</code></a>.</li>
+<li>Assinatura e verificação: <a href="https://docs.openssl.org/3.5/man1/openssl-dgst/">OpenSSL <code>dgst</code></a>.</li>
+<li>Criptografia e descriptografia com OAEP: <a href="https://docs.openssl.org/3.5/man1/openssl-pkeyutl/">OpenSSL <code>pkeyutl</code></a>.</li>
+<li>Preservação dos bytes durante a troca de arquivos: <a href="https://git-scm.com/docs/gitattributes">Git <code>gitattributes</code></a>.</li>
+</ul>
+</article>
+    </main>
+    <footer>Fonte: <a href="README.MD" download>README.MD</a>.</footer>
+  </div>
+</body>
+</html>

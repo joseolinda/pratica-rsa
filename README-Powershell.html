@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prática de RSA com OpenSSL: geração de chaves, assinatura digital, verificação, criptografia e descriptografia.">
+  <title>Prática de laboratório — RSA no Windows — Windows · PowerShell</title>
+  <style>
+:root { color-scheme: light; --ink: #172536; --muted: #526177; --line: #d9e1e9; --accent: #075b99; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+body { margin: 0; color: var(--ink); background: #f3f6fa; font: 16px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+.site-header { padding: 0 0 1.5rem; }
+.site-header p { margin: 0 0 .6rem; font-size: .8rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.guides { display: flex; gap: .65rem; flex-wrap: wrap; }
+.guides a { padding: .5rem 1rem; border: 1px solid var(--line); border-radius: .5rem; background: white; text-decoration: none; font-weight: 650; }
+.guides a[aria-current="page"] { background: var(--accent); color: white; border-color: var(--accent); }
+main { padding: clamp(1rem, 4vw, 3rem); background: white; border: 1px solid var(--line); border-radius: .8rem; }
+a { color: var(--accent); text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, summary:focus-visible { outline: 3px solid #d47d05; outline-offset: 4px; }
+h1, h2, h3 { line-height: 1.3; color: #102942; }
+h1 { margin: 0 0 1.25rem; font-size: clamp(1.8rem, 4vw, 2.55rem); letter-spacing: -.025em; }
+h2 { margin: 2.6rem 0 1rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: 1.5rem; }
+h3 { margin: 1.8rem 0 .8rem; font-size: 1.13rem; }
+p, ul, ol { margin: 0 0 1.1rem; }
+li { margin: .35rem 0; }
+strong { font-weight: 720; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; }
+code { padding: .12em .32em; background: #edf2f6; border-radius: .25rem; font-size: .88em; overflow-wrap: anywhere; }
+pre { margin: 1.1rem 0 1.4rem; padding: 1.1rem 1.2rem; background: #132638; color: #f2f6fb; border-radius: .5rem; overflow-x: auto; line-height: 1.6; tab-size: 4; }
+pre code { padding: 0; background: none; color: inherit; font-size: .84rem; overflow-wrap: normal; }
+.table-scroll { width: 100%; overflow-x: auto; margin: 1.1rem 0 1.5rem; }
+table { width: 100%; border-collapse: collapse; font-size: .94rem; }
+th, td { padding: .75rem .85rem; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: #edf3f8; font-weight: 700; }
+tbody tr:nth-child(even) { background: #f8fafc; }
+.toc { padding: 1rem 1.2rem; margin: 0 0 2rem; background: #f3f7fb; border: 1px solid var(--line); border-radius: .5rem; }
+.toc summary { cursor: pointer; font-weight: 700; }
+.toc ul { columns: 2; column-gap: 2rem; margin: .8rem 0 0; padding-left: 1.3rem; font-size: .92rem; }
+.toc li { break-inside: avoid; }
+footer { margin-top: 1.3rem; color: var(--muted); font-size: .85rem; }
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 1rem; top: 1rem; background: white; padding: .5rem; z-index: 10; }
+@media (max-width: 600px) {
+  .page { padding: 1rem .6rem 2rem; }
+  main { border-radius: .4rem; }
+  .toc ul { columns: 1; }
+  th, td { padding: .6rem; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media print {
+  @page { margin: 16mm; }
+  body { background: white; color: black; font-size: 10pt; line-height: 1.5; }
+  .page { padding: 0; max-width: none; }
+  .site-header, .toc, .skip, footer { display: none; }
+  main { padding: 0; border: 0; }
+  h1 { font-size: 23pt; }
+  h2 { font-size: 16pt; margin-top: 1.5rem; }
+  h3 { font-size: 12pt; }
+  h1, h2, h3 { break-after: avoid; }
+  p, li { orphans: 3; widows: 3; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; color: black; background: #f3f3f3; border: 1px solid #bbb; padding: .6rem; }
+  pre code { font-size: 8pt; white-space: inherit; overflow-wrap: inherit; }
+  .table-scroll { overflow: visible; }
+  table { table-layout: fixed; font-size: 9pt; }
+  td, th { overflow-wrap: anywhere; padding: .4rem; }
+  tr { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+  <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+  <div class="page">
+    <header class="site-header">
+      <p>Laboratório RSA</p>
+      <nav class="guides" aria-label="Escolha o roteiro"><a href="README.html">Linux e macOS</a>
+<a href="README-Powershell.html" aria-current="page">Windows · PowerShell</a></nav>
+    </header>
+    <main id="conteudo">
+      <nav class="toc" aria-label="Etapas deste roteiro">
+        <details open><summary>Neste roteiro</summary>
+          <ul><li><a href="#0-preparar-o-laboratorio">0. Preparar o laboratório</a></li><li><a href="#1-gerar-e-compartilhar-a-chave-publica">1. Gerar e compartilhar a chave pública</a></li><li><a href="#2-criar-assinar-e-enviar-uma-mensagem">2. Criar, assinar e enviar uma mensagem</a></li><li><a href="#3-conferir-a-mensagem-recebida-e-detectar-alteracoes">3. Conferir a mensagem recebida e detectar alterações</a></li><li><a href="#4-criar-e-enviar-um-texto-criptografado">4. Criar e enviar um texto criptografado</a></li><li><a href="#5-descriptografar-a-resposta-recebida">5. Descriptografar a resposta recebida</a></li><li><a href="#6-registrar-o-aprendizado">6. Registrar o aprendizado</a></li><li><a href="#solucao-de-problemas">Solução de problemas</a></li></ul>
+        </details>
+      </nav>
+      <article><h1 id="pratica-de-laboratorio-rsa-no-windows">Prática de laboratório — RSA no Windows</h1>
+<p>Roteiro para <strong>Windows PowerShell 5.1 ou PowerShell 7</strong>, com OpenSSL 3.x e Git. Abra o <strong>PowerShell</strong> para executar os blocos abaixo; as variáveis e a criação de arquivos deste roteiro não são comandos do CMD.</p>
+<p>Em dupla, <strong>cada estudante realiza todas as etapas</strong>: gerar suas chaves, enviar uma mensagem assinada, verificar a mensagem recebida, detectar uma alteração, enviar uma resposta criptografada e descriptografar a resposta do colega. O <a href="README.html">roteiro principal</a> reúne os objetivos e a versão para Linux/macOS.</p>
+<h2 id="0-preparar-o-laboratorio">0. Preparar o laboratório</h2>
+<h3 id="0-1-instalar-o-openssl-light">0.1 Instalar o OpenSSL Light</h3>
+<p><strong>A opção mais simples é baixar pelo navegador:</strong> <a href="https://slproweb.com/download/Win64OpenSSL_Light-3_5_9.exe">Win64 OpenSSL 3.5.9 Light — instalador EXE</a>. A edição <strong>Light é suficiente</strong> para todos os comandos desta prática. O link foi conferido em <strong>03/11/2026</strong>; se a versão mudar, abra o <a href="https://slproweb.com/products/Win32OpenSSL.html">catálogo oficial da Shining Light Productions</a> e escolha <strong>Win64 OpenSSL Light da série 3.5 LTS</strong>. Esse pacote é para Windows x64; em máquinas x86 ou ARM, escolha a arquitetura correspondente disponível no catálogo. A <a href="https://openssl-library.org/policies/releasestrat/">política oficial do OpenSSL</a> informa os prazos de suporte das séries.</p>
+<p>Se o <strong>GNU Wget já estiver instalado</strong>, esta é uma alternativa no PowerShell:</p>
+<pre><code class="language-powershell">wget.exe -O &quot;$env:TEMP\OpenSSL-Light.exe&quot; &quot;https://slproweb.com/download/Win64OpenSSL_Light-3_5_9.exe&quot;
+</code></pre>
+<p>Depois, abra <code>OpenSSL-Light.exe</code> na pasta temporária indicada por <code>$env:TEMP</code>, ou execute:</p>
+<pre><code class="language-powershell">Start-Process -FilePath &quot;$env:TEMP\OpenSSL-Light.exe&quot; -Wait
+</code></pre>
+<p>Use <strong><code>wget.exe</code></strong>, incluindo a extensão. No Windows PowerShell 5.1, <code>wget</code> é um alias de <code>Invoke-WebRequest</code>, que possui parâmetros diferentes dos do GNU Wget (<a href="https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-webrequest?view=powershell-5.1">documentação da Microsoft</a>). Se aparecer “<code>wget.exe</code> não é reconhecido”, use o link no navegador; não é necessário instalar outro programa só para baixar o OpenSSL.</p>
+<p>Execute o instalador Light. Em computadores administrados pela escola, a instalação pode exigir a conta do responsável pelo laboratório. <strong><code>Install-Module -Name OpenSSL</code> não substitui a instalação do executável <code>openssl.exe</code> usado nesta prática.</strong></p>
+<p>Feche e reabra o PowerShell e teste:</p>
+<pre><code class="language-powershell">openssl version
+</code></pre>
+<p>Se o comando não for encontrado, acrescente a pasta do executável ao <code>PATH</code> <strong>desta sessão</strong> e teste novamente:</p>
+<pre><code class="language-powershell">Test-Path 'C:\Program Files\OpenSSL-Win64\bin\openssl.exe'
+$env:Path = 'C:\Program Files\OpenSSL-Win64\bin;' + $env:Path
+openssl version
+</code></pre>
+<p>O primeiro comando deve retornar <code>True</code>. Se retornar <code>False</code>, localize a pasta escolhida durante a instalação e ajuste o caminho antes de continuar. A alteração acima vale apenas para a janela atual; se abrir outra janela, execute-a novamente. O responsável pelo laboratório também pode cadastrar essa pasta no <code>PATH</code> do Windows.</p>
+<h3 id="0-2-obter-o-projeto">0.2 Obter o projeto</h3>
+<p>Confira também se o Git está disponível:</p>
+<pre><code class="language-powershell">git --version
+</code></pre>
+<p>Se não for reconhecido, instale o <a href="https://gitforwindows.org/">Git for Windows</a> ou peça ao responsável pelo laboratório para instalá-lo. Depois, reabra o PowerShell e confira novamente.</p>
+<p>Use uma pasta na qual você possa salvar arquivos. Cada estudante deve trabalhar em <strong>seu próprio clone</strong> e ter acesso ao repositório usado pela turma:</p>
+<pre><code class="language-powershell">git clone https://github.com/joseolinda/pratica-rsa.git
+Set-Location pratica-rsa
+</code></pre>
+<p>Se já clonou, entre na pasta existente. <strong>Daqui até o final, execute todos os comandos na raiz <code>pratica-rsa</code>; não entre nas subpastas.</strong> Confira:</p>
+<pre><code class="language-powershell">Get-Location
+Get-ChildItem
+</code></pre>
+<h3 id="0-3-definir-os-nomes-e-os-diretorios">0.3 Definir os nomes e os diretórios</h3>
+<p>Combine com o colega dois identificadores únicos na turma, sem espaços nem acentos, como <code>ana-silva</code> e <code>bruno-lima</code>. Os exemplos usam <code>alice</code> e <code>bruno</code>. No computador de Bruno, inverta os valores de <code>$eu</code> e <code>$colega</code>.</p>
+<pre><code class="language-powershell">$eu = 'alice'
+$colega = 'bruno'
+$raiz = (Get-Location).Path
+$local = &quot;local/$eu&quot;
+$enviada = &quot;messages/de-$eu-para-$colega&quot;
+$recebida = &quot;messages/de-$colega-para-$eu&quot;
+$respostaEnviada = &quot;responses/de-$eu-para-$colega&quot;
+$respostaRecebida = &quot;responses/de-$colega-para-$eu&quot;
+$utf8 = New-Object System.Text.UTF8Encoding -ArgumentList $false
+New-Item -ItemType Directory -Force -Path $local, 'public-keys', $enviada, $respostaEnviada | Out-Null
+</code></pre>
+<p>As variáveis duram somente enquanto essa janela estiver aberta. Se precisar reabrir o PowerShell, volte à raiz do projeto e execute novamente este bloco com os mesmos nomes.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Pasta</th>
+<th>Conteúdo</th>
+<th>Enviar ao repositório?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>local/alice/</code></td>
+<td>Chave privada, texto secreto e texto descriptografado de Alice</td>
+<td><strong>Não</strong>; ignorada pelo Git</td>
+</tr>
+<tr>
+<td><code>public-keys/</code></td>
+<td>Chaves públicas de todos</td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>messages/de-alice-para-bruno/</code></td>
+<td>Mensagem pública e assinatura de Alice</td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>responses/de-alice-para-bruno/</code></td>
+<td>Resposta criptografada para Bruno</td>
+<td>Sim</td>
+</tr>
+</tbody>
+</table></div>
+<p>Não reutilize a chave privada de outra pessoa, inclusive em computadores compartilhados. Preserve sua chave privada durante toda a prática. <strong>Não envie <code>local/</code> nem arquivos de chave privada.</strong></p>
+<p><strong>Se você já começou a versão anterior da prática:</strong> preserve a antiga <code>private.key</code> da raiz. Para continuar com aquela identidade, copie sua própria chave para <code>local/&lt;seu-identificador&gt;/private.key</code>, sem sobrescrever outro arquivo, e confirme com o professor que ela corresponde à chave pública já publicada. Não gere outra chave por cima. Respostas antigas feitas com o padding padrão PKCS#1 v1.5 não usam os mesmos parâmetros deste roteiro; para o novo fluxo, a dupla deve gerar novas respostas com OAEP/SHA-256.</p>
+<h2 id="1-gerar-e-compartilhar-a-chave-publica">1. Gerar e compartilhar a chave pública</h2>
+<p>Execute esta geração <strong>uma única vez</strong>. O bloco só gera chaves quando os dois caminhos estão livres, protegendo tanto sua chave privada quanto uma chave pública já publicada com esse identificador:</p>
+<pre><code class="language-powershell">if ((Test-Path &quot;$local/private.key&quot;) -or (Test-Path &quot;public-keys/$eu.pub&quot;)) {
+    Write-Host 'Ja existe uma chave em um dos caminhos. Nenhuma chave foi gerada; confira as instrucoes abaixo.'
+} else {
+    openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out &quot;$local/private.key&quot;
+    if ($LASTEXITCODE -ne 0) { throw 'Falha ao gerar a chave privada. Resolva antes de continuar.' }
+    openssl pkey -in &quot;$local/private.key&quot; -pubout -out &quot;public-keys/$eu.pub&quot;
+    if ($LASTEXITCODE -ne 0) { throw 'Falha ao exportar a chave publica. Resolva antes de continuar.' }
+    openssl pkey -in &quot;$local/private.key&quot; -check -noout
+}
+</code></pre>
+<p>Se os dois arquivos já existem e formam <strong>seu próprio par de chaves</strong>, pule a geração e preserve o par. Se apenas um existe, se a chave pública pertence a outra pessoa ou se você não tem certeza, resolva com o professor antes de continuar; para uma nova identidade, escolha outro identificador livre e ajuste as variáveis. Substituir a chave privada impede descriptografar mensagens destinadas à chave anterior.</p>
+<p>A chave privada permite <strong>assinar e descriptografar</strong>. A chave pública permite <strong>verificar assinaturas e criptografar para o dono da chave privada</strong>. A chave pública começa com <code>-----BEGIN PUBLIC KEY-----</code>; a privada permanece em <code>local/</code>.</p>
+<p>Publique apenas sua chave pública:</p>
+<pre><code class="language-powershell">git add -- &quot;public-keys/$eu.pub&quot;
+git diff --cached --name-only
+</code></pre>
+<p>Confira a lista antes de prosseguir: ela deve conter apenas sua chave pública. Se houver algo de outra atividade ou uma chave privada, pare e retire esse arquivo da seleção com <code>git restore --staged -- caminho-do-arquivo</code>. Não use <code>git add -f</code> para contornar os arquivos ignorados. Depois de conferir:</p>
+<pre><code class="language-powershell">git commit -m &quot;Publica chave de $eu&quot;
+git pull --rebase
+git push
+</code></pre>
+<p><strong>Aguarde os dois publicarem suas chaves.</strong> Atualize seu clone:</p>
+<pre><code class="language-powershell">git pull --ff-only
+Test-Path &quot;public-keys/$colega.pub&quot;
+</code></pre>
+<p>O teste deve retornar <code>True</code>. Confirme presencialmente com o colega que o arquivo é dele. Para comparar também a impressão digital da chave, cada um calcula o SHA-256 da própria chave pública e informa o resultado ao outro por um canal confiável:</p>
+<pre><code class="language-powershell">openssl pkey -pubin -in &quot;public-keys/$eu.pub&quot; -outform DER -out &quot;$local/publica.der&quot;
+openssl dgst -sha256 &quot;$local/publica.der&quot;
+openssl pkey -pubin -in &quot;public-keys/$colega.pub&quot; -outform DER -out &quot;$local/colega.der&quot;
+openssl dgst -sha256 &quot;$local/colega.der&quot;
+</code></pre>
+<p>Compare os valores hexadecimais, não os nomes dos arquivos. Uma assinatura válida só identifica o colega quando a chave pública usada na verificação foi confirmada como sendo dele.</p>
+<h2 id="2-criar-assinar-e-enviar-uma-mensagem">2. Criar, assinar e enviar uma mensagem</h2>
+<p>Escreva uma mensagem destinada ao colega. Ela será <strong>pública</strong>, pois assinatura digital não oculta o conteúdo. O comando abaixo grava UTF-8 sem BOM, incluindo acentos, de forma consistente entre PowerShell 5.1 e 7:</p>
+<pre><code class="language-powershell">[System.IO.File]::WriteAllText((Join-Path $raiz &quot;$enviada/mensagem.txt&quot;), &quot;Olá, $colega! Esta mensagem foi enviada por $eu.&quot;, $utf8)
+openssl dgst -sha256 -sign &quot;$local/private.key&quot; -out &quot;$enviada/assinatura.bin&quot; &quot;$enviada/mensagem.txt&quot;
+</code></pre>
+<p>São dois arquivos: <code>mensagem.txt</code> contém o texto; <code>assinatura.bin</code> contém a assinatura RSA/SHA-256 calculada com sua chave privada. Depois de assinar, <strong>não edite nem salve novamente a mensagem</strong>. Para mudar o texto, assine novamente antes de enviar.</p>
+<pre><code class="language-powershell">git add -- &quot;$enviada/mensagem.txt&quot; &quot;$enviada/assinatura.bin&quot;
+git diff --cached --name-only
+</code></pre>
+<p>Confira se estão selecionados somente a mensagem e a assinatura enviadas. Depois:</p>
+<pre><code class="language-powershell">git commit -m &quot;Envia mensagem assinada de $eu para $colega&quot;
+git pull --rebase
+git push
+</code></pre>
+<h2 id="3-conferir-a-mensagem-recebida-e-detectar-alteracoes">3. Conferir a mensagem recebida e detectar alterações</h2>
+<h3 id="3-1-verificar-o-arquivo-original">3.1 Verificar o arquivo original</h3>
+<p><strong>Aguarde o colega concluir a etapa 2</strong> e atualize seu clone:</p>
+<pre><code class="language-powershell">git pull --ff-only
+Get-Content -LiteralPath &quot;$recebida/mensagem.txt&quot; -Encoding UTF8 -Raw
+openssl dgst -sha256 -verify &quot;public-keys/$colega.pub&quot; -signature &quot;$recebida/assinatura.bin&quot; &quot;$recebida/mensagem.txt&quot;
+$LASTEXITCODE
+</code></pre>
+<p>O resultado esperado é <strong><code>Verified OK</code></strong> e código <strong><code>0</code></strong>. Isso indica que os bytes da mensagem correspondem à assinatura e à chave pública informada. Com a chave confirmada na etapa 1, você tem evidência de autenticidade e integridade. A assinatura não torna o texto confidencial nem garante que o conteúdo escrito seja verdadeiro.</p>
+<h3 id="3-2-alterar-uma-copia-e-verificar-novamente">3.2 Alterar uma cópia e verificar novamente</h3>
+<p>Preserve o arquivo recebido. Faça a experiência apenas com uma cópia local:</p>
+<pre><code class="language-powershell">Copy-Item -LiteralPath &quot;$recebida/mensagem.txt&quot; -Destination &quot;$local/mensagem-alterada.txt&quot;
+[System.IO.File]::AppendAllText((Join-Path $raiz &quot;$local/mensagem-alterada.txt&quot;), ' ALTERACAO DE TESTE', $utf8)
+openssl dgst -sha256 -verify &quot;public-keys/$colega.pub&quot; -signature &quot;$recebida/assinatura.bin&quot; &quot;$local/mensagem-alterada.txt&quot;
+$LASTEXITCODE
+</code></pre>
+<p>O esperado é <strong>falha de verificação</strong> e código <strong>diferente de <code>0</code></strong>, geralmente com <code>Verification failure</code> ou <code>Verification Failure</code>. Uma alteração no texto invalida a assinatura original, mesmo que a assinatura não tenha mudado.</p>
+<h3 id="3-3-usar-a-chave-publica-errada">3.3 Usar a chave pública errada</h3>
+<p>Verifique a mensagem original do colega usando <strong>sua própria chave pública</strong>:</p>
+<pre><code class="language-powershell">openssl dgst -sha256 -verify &quot;public-keys/$eu.pub&quot; -signature &quot;$recebida/assinatura.bin&quot; &quot;$recebida/mensagem.txt&quot;
+$LASTEXITCODE
+</code></pre>
+<p>Também deve falhar. Registre os três resultados: mensagem original com chave correta, cópia alterada com chave correta e mensagem original com chave errada. Não publique as cópias de teste.</p>
+<h2 id="4-criar-e-enviar-um-texto-criptografado">4. Criar e enviar um texto criptografado</h2>
+<p>Cada estudante escreve uma resposta confidencial ao colega. Use um texto curto, pois <strong>RSA de 2048 bits com OAEP/SHA-256 aceita no máximo 190 bytes</strong> por operação. Acentos podem ocupar mais de um byte em UTF-8. Esta limitação pertence ao RSA direto; arquivos maiores normalmente usam criptografia híbrida.</p>
+<pre><code class="language-powershell">[System.IO.File]::WriteAllText((Join-Path $raiz &quot;$local/resposta.txt&quot;), &quot;Resposta secreta de $eu para $colega.&quot;, $utf8)
+$tamanho = (Get-Item -LiteralPath &quot;$local/resposta.txt&quot;).Length
+$tamanho
+if ($tamanho -gt 190) { throw 'Reduza a resposta para no maximo 190 bytes antes de criptografar.' }
+</code></pre>
+<p>Com o texto dentro do limite, criptografe usando a <strong>chave pública do destinatário</strong>, mantendo todos os parâmetros explícitos:</p>
+<pre><code class="language-powershell">openssl pkeyutl -encrypt -pubin -inkey &quot;public-keys/$colega.pub&quot; -in &quot;$local/resposta.txt&quot; -out &quot;$respostaEnviada/resposta.enc&quot; -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256
+$LASTEXITCODE
+</code></pre>
+<p>Só prossiga se o código for <code>0</code>. O arquivo <code>resposta.enc</code> é binário e não deve ser aberto e salvo como texto. O colega precisará da chave privada correspondente à chave pública que você usou.</p>
+<p>Envie <strong>somente o arquivo criptografado</strong>. O texto <code>resposta.txt</code> permanece na pasta local:</p>
+<pre><code class="language-powershell">git add -- &quot;$respostaEnviada/resposta.enc&quot;
+git diff --cached --name-only
+</code></pre>
+<p>Confira se somente o arquivo <code>resposta.enc</code> está selecionado. Depois:</p>
+<pre><code class="language-powershell">git commit -m &quot;Envia resposta criptografada de $eu para $colega&quot;
+git pull --rebase
+git push
+</code></pre>
+<p>Criptografar com a chave pública do colega protege a confidencialidade. Esse comando, sozinho, não comprova quem enviou a resposta: qualquer pessoa que possua a chave pública pode criptografar para ele.</p>
+<h2 id="5-descriptografar-a-resposta-recebida">5. Descriptografar a resposta recebida</h2>
+<p><strong>Aguarde o colega concluir a etapa 4</strong> e atualize seu clone. Descriptografe usando <strong>sua própria chave privada</strong>, com os mesmos parâmetros OAEP usados na criptografia:</p>
+<pre><code class="language-powershell">git pull --ff-only
+openssl pkeyutl -decrypt -inkey &quot;$local/private.key&quot; -in &quot;$respostaRecebida/resposta.enc&quot; -out &quot;$local/resposta-recebida.txt&quot; -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256
+$LASTEXITCODE
+</code></pre>
+<p>O código deve ser <code>0</code>. Leia o texto recuperado:</p>
+<pre><code class="language-powershell">Get-Content -LiteralPath &quot;$local/resposta-recebida.txt&quot; -Encoding UTF8 -Raw
+</code></pre>
+<p>Confirme com o colega, presencialmente, que o texto recuperado corresponde ao que ele escreveu. Não publique a resposta em texto claro nem sua chave privada para fazer essa comparação.</p>
+<h3 id="experiencia-tentar-abrir-uma-resposta-destinada-ao-colega">Experiência: tentar abrir uma resposta destinada ao colega</h3>
+<p>Use a resposta que <strong>você enviou</strong> na etapa 4: ela foi criptografada para a chave pública do colega. Tente abri-la com <strong>sua</strong> chave privada e uma saída de teste separada:</p>
+<pre><code class="language-powershell">openssl pkeyutl -decrypt -inkey &quot;$local/private.key&quot; -in &quot;$respostaEnviada/resposta.enc&quot; -out &quot;$local/tentativa-chave-errada.txt&quot; -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256
+$LASTEXITCODE
+</code></pre>
+<p>O resultado esperado é erro, como <code>oaep decoding error</code>, e código diferente de <code>0</code>. Um arquivo de saída vazio não significa que houve descriptografia: confira o código de saída. Cada estudante deve ter sua própria chave para que esta experiência funcione.</p>
+<h2 id="6-registrar-o-aprendizado">6. Registrar o aprendizado</h2>
+<p>Cada estudante entrega <strong>no Classroom um relatório de até uma página</strong>, identificando seu nome, o colega e os identificadores usados. Inclua evidências dos comandos e resultados, contendo:</p>
+<ol>
+<li>Nome dos arquivos de chave pública e chave privada e a função de cada uma. <strong>Não mostre o conteúdo da chave privada.</strong></li>
+<li>Caminho da mensagem e da assinatura enviadas.</li>
+<li>Resultado da verificação da mensagem original, da cópia alterada e do teste com a chave pública errada.</li>
+<li>Caminho do texto criptografado enviado, resultado da descriptografia da resposta recebida e resultado do teste com a chave privada errada.</li>
+<li>Explicação: por que a assinatura detecta alterações? Por que criptografar para alguém exige a chave pública dessa pessoa? Por que assinar com chave privada não é “criptografar um texto com a chave privada”? O que acontece se a chave privada vazar ou for perdida?</li>
+</ol>
+<p>Os dois integrantes devem concluir o fluxo completo. Uma assinatura válida e uma descriptografia bem-sucedida demonstram propriedades diferentes; explique quais são elas.</p>
+<h2 id="solucao-de-problemas">Solução de problemas</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Sintoma</th>
+<th>O que conferir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wget.exe</code> não é reconhecido</td>
+<td>Use o link de download no navegador. <code>wget</code> sem extensão pode chamar um alias do PowerShell.</td>
+</tr>
+<tr>
+<td><code>openssl</code> não é reconhecido</td>
+<td>Confira a instalação Light, o caminho de <code>openssl.exe</code> e o <code>PATH</code> da sessão na etapa 0.1.</td>
+</tr>
+<tr>
+<td>Falta de DLL ou dependência do Windows</td>
+<td>Siga as dependências indicadas no catálogo do instalador e peça ao responsável pelo laboratório a instalação necessária.</td>
+</tr>
+<tr>
+<td><code>Cannot open file</code>, arquivo inexistente ou caminho vazio</td>
+<td>Execute <code>Get-Location</code>; volte à raiz, confira as variáveis e use <code>Get-ChildItem public-keys</code>, <code>Get-ChildItem messages</code> e <code>Get-ChildItem responses</code>. Aguarde o envio do colega e faça <code>git pull --ff-only</code>.</td>
+</tr>
+<tr>
+<td>Assinatura do original falha</td>
+<td>Confirme a chave do remetente e os mesmos bytes da mensagem. Salvar em outra codificação ou trocar quebras de linha altera os bytes. Baixe novamente a versão enviada, sem editar.</td>
+</tr>
+<tr>
+<td><code>data too large for key size</code></td>
+<td>Reduza <code>local/&lt;seu-nome&gt;/resposta.txt</code> para até 190 bytes, conferindo <code>.Length</code> como na etapa 4.</td>
+</tr>
+<tr>
+<td>Descriptografia falha</td>
+<td>Confirme o destinatário, sua chave privada original e os três parâmetros OAEP/SHA-256/MGF1. Arquivos de atividades antigas que usaram outro padding não seguem este roteiro.</td>
+</tr>
+<tr>
+<td><code>git push</code> rejeitado porque o remoto mudou</td>
+<td>Depois de conferir e fazer commit dos seus arquivos, execute <code>git pull --rebase</code> e tente <code>git push</code> novamente. Não use <code>push --force</code>.</td>
+</tr>
+<tr>
+<td>Sem permissão de envio ao repositório</td>
+<td>Use o repositório indicado pelo professor ou transfira apenas a chave pública, o par mensagem/assinatura e o arquivo <code>.enc</code> pelo canal combinado. Preserve os mesmos caminhos ao recebê-los.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Para inspecionar arquivos binários, use os comandos do OpenSSL; não passe assinaturas ou textos criptografados por <code>Get-Content</code>, <code>Set-Content</code> ou redirecionamentos de texto do PowerShell. Preserve os arquivos exatamente como foram gerados.</p>
+</article>
+    </main>
+    <footer>Fonte: <a href="README-Powershell.MD" download>README-Powershell.MD</a>.</footer>
+  </div>
+</body>
+</html>

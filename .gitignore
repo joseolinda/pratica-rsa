@@ -1,6 +1,9 @@
 # Versionar apenas o material da prática e os arquivos de troca previstos.
 *
 !/*.MD
+!/README.html
+!/README-Powershell.html
+!/index.html
 !/.gitignore
 !/.gitattributes
 
