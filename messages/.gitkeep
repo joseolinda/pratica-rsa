@@ -1,0 +1,9 @@
+eu='guilherme'
+colega='lana'
+local="local/$eu"
+enviada="messages/de-$eu-para-$colega"
+recebida="messages/de-$colega-para-$eu"
+respostaEnviada="responses/de-$eu-para-$colega"
+respostaRecebida="responses/de-$colega-para-$eu"
+mkdir -p "$local" public-keys "$enviada" "$respostaEnviada"
+chmod 700 "$local"
