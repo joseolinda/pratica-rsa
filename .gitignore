@@ -1,9 +1,26 @@
-# Manter somente os arquivos .MD e .gitignore na raiz do repositório
+# Versionar apenas o material da prática e os arquivos de troca previstos.
 *
-# Exceto os arquivos .MD e .gitignore
 !/*.MD
 !/.gitignore
-!/*/
-# Manter o conteúdo das pastas
-!*/*
-!*/**/*
+!/.gitattributes
+
+!/public-keys/
+!/public-keys/.gitkeep
+!/public-keys/*.pub
+
+!/messages/
+!/messages/**/
+!/messages/.gitkeep
+!/messages/**/mensagem.txt
+!/messages/**/assinatura.bin
+
+!/responses/
+!/responses/**/
+!/responses/.gitkeep
+!/responses/**/resposta.enc
+
+# Manter dados locais e chaves privadas fora do Git, inclusive em subpastas.
+/local/
+private.key
+*.key
+*.pem

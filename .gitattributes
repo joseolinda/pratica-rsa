@@ -1,0 +1,7 @@
+# Mensagens assinadas precisam manter os mesmos bytes em todos os sistemas.
+/messages/**/mensagem.txt -text
+*.bin binary
+*.enc binary
+
+# Chaves públicas PEM podem usar LF em qualquer sistema.
+*.pub text eol=lf
