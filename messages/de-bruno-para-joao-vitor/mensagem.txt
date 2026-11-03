@@ -1,0 +1,1 @@
+﻿Olá, João Vitor! Recebi sua mensagem e consegui validar sua assinatura digital com sucesso utilizando sua chave pública. Obrigado pelo envio! Nossa comunicação RSA está funcionando corretamente. Abraço! - Bruno
